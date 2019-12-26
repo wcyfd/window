@@ -139,7 +139,7 @@ public class GameWindows extends JFrame {
 
 	}
 
-	private void render() {
+	public final void render() {
 		if (viewer == null) {
 			return;
 		}
