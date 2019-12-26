@@ -12,6 +12,9 @@ import java.io.PipedOutputStream;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
@@ -33,6 +36,7 @@ public class GameWindows extends JFrame {
 	private IView viewer = null;
 
 	private ExecutorService logicThread = Executors.newSingleThreadExecutor();
+	private ScheduledExecutorService scheduledThread = Executors.newScheduledThreadPool(1);
 
 	public void setView(IView view) {
 		this.viewer = view;
@@ -153,6 +157,32 @@ public class GameWindows extends JFrame {
 
 		});
 
+	}
+
+	/**
+	 * 计时器，时间到了之后会触发事件，但是事件是调用逻辑线程， 逻辑线程将该事件执行完毕之后会进行渲染
+	 * 
+	 * @param runnable
+	 * @param delay
+	 * @param unit
+	 * @return
+	 */
+	public ScheduledFuture<?> schedule(UIRunnable runnable, long delay, TimeUnit unit) {
+		return scheduledThread.schedule(new Runnable() {
+
+			@Override
+			public void run() {
+				logicThread.execute(new Runnable() {
+					@Override
+					public void run() {
+						runnable.execute();
+						render();
+						runnable.afterExecute();
+					}
+				});
+
+			}
+		}, delay, unit);
 	}
 
 	private class CmdRunnable implements Runnable {
