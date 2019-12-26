@@ -9,8 +9,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
@@ -26,10 +27,22 @@ public class GameWindows extends JFrame {
 	private PipedOutputStream outputStream;
 	private BufferedWriter bw;
 	private GameHandler handler;
+	private GameWindows win = null;
 
 	private JTextArea area = new JTextArea();
+	private IView viewer = null;
 
-	public GameWindows(GameHandler handler) {
+	private ExecutorService logicThread = Executors.newSingleThreadExecutor();
+
+	public void setView(IView view) {
+		this.viewer = view;
+	}
+
+	public GameWindows() {
+		this.win = this;
+	}
+
+	public void setHandler(GameHandler handler) {
 		this.handler = handler;
 	}
 
@@ -88,16 +101,8 @@ public class GameWindows extends JFrame {
 	}
 
 	private void cmdStart() {
-		final GameWindows w = this;
 
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				render();
-			}
-
-		});
+		render();
 
 		new Thread() {
 			public void run() {
@@ -106,11 +111,7 @@ public class GameWindows extends JFrame {
 					String line = null;
 					try {
 						while ((line = reader.readLine()) != null) {
-							try {
-								SwingUtilities.invokeAndWait(new CmdTask(w, line));
-							} catch (InvocationTargetException | InterruptedException e) {
-								e.printStackTrace();
-							}
+							logicThread.execute(new CmdRunnable(line));
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -125,6 +126,7 @@ public class GameWindows extends JFrame {
 		new Thread() {
 			@Override
 			public void run() {
+				@SuppressWarnings("resource")
 				Scanner in = new Scanner(System.in);
 				while (true) {
 					String line = in.nextLine();
@@ -137,15 +139,34 @@ public class GameWindows extends JFrame {
 
 	}
 
-	public void execute(GameWindows win, String cmd) {
-		handler.execute(win, cmd);
-		render();
+	private void render() {
+		if (viewer == null) {
+			return;
+		}
+		SwingUtilities.invokeLater(new Runnable() {
+
+			@Override
+			public void run() {
+				area.setText("");
+				area.append(viewer.render());
+			}
+
+		});
+
 	}
 
-	private void render() {
-		String view = handler.view();
-		this.area.setText(null);
-		this.area.append(view);
+	private class CmdRunnable implements Runnable {
+		String cmd;
+
+		public CmdRunnable(String cmd) {
+			this.cmd = cmd;
+		}
+
+		@Override
+		public void run() {
+			handler.execute(win, cmd);
+			render();
+		}
 	}
 
 }

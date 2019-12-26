@@ -12,21 +12,21 @@ public class App {
 
 	public static void main(String[] args) throws IOException {
 
-		
-		GameWindows g = new GameWindows(new GameHandler() {
+		GameWindows g = new GameWindows();
+
+		g.setHandler(new GameHandler() {
 			@Override
 			public void execute(GameWindows win, String cmd) {
 				content = cmd;
 			}
 
+		});
+		g.setView(new IView() {
+
 			@Override
-			public String view() {
-				StringBuilder sb = new StringBuilder();
-				sb.append("================菜单==================");
-				sb.append("\n");
-				sb.append(content).append("\n");
-				sb.append("=====================================");
-				return sb.toString();
+			public String render() {
+
+				return content;
 			}
 		});
 		g.start();
