@@ -12,7 +12,7 @@ public class App {
 
 	public static void main(String[] args) throws IOException {
 
-		GameWindows g = new GameWindows();
+		GameWindows g = GameWindows.create();
 
 		g.setHandler(new GameHandler() {
 			@Override
@@ -29,7 +29,6 @@ public class App {
 				return content;
 			}
 		});
-		g.start();
 		System.out.println("命令行启动");
 		g.startConsoleThread();
 	}

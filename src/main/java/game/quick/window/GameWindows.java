@@ -42,15 +42,20 @@ public class GameWindows extends JFrame {
 		this.viewer = view;
 	}
 
-	public GameWindows() {
+	private GameWindows() {
 		this.win = this;
+		this.initialize();
+	}
+
+	public static GameWindows create() {
+		return new GameWindows();
 	}
 
 	public void setHandler(GameHandler handler) {
 		this.handler = handler;
 	}
 
-	public GameWindows start() {
+	private GameWindows initialize() {
 		initComponent();
 		try {
 			initCommunication();
@@ -71,15 +76,11 @@ public class GameWindows extends JFrame {
 		bw = new BufferedWriter(new OutputStreamWriter(outputStream));
 	}
 
-	public OutputStream getOutputStream() {
-		return outputStream;
+	public void command(String line) {
+		sendCommand(line);
 	}
 
-	public BufferedWriter getWriter() {
-		return bw;
-	}
-
-	public void execute(String line) {
+	private void sendCommand(String line) {
 		try {
 			bw.write(line);
 			bw.newLine();
@@ -89,7 +90,7 @@ public class GameWindows extends JFrame {
 		}
 	}
 
-	public void initComponent() {
+	private void initComponent() {
 		setSize(600, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
@@ -115,7 +116,7 @@ public class GameWindows extends JFrame {
 					String line = null;
 					try {
 						while ((line = reader.readLine()) != null) {
-							logicThread.execute(new CmdRunnable(line));
+							executeCmd(line);
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -123,6 +124,17 @@ public class GameWindows extends JFrame {
 				}
 			};
 		}.start();
+	}
+
+	private void executeCmd(String cmd) {
+		logicThread.execute(new Runnable() {
+
+			@Override
+			public void run() {
+				handler.execute(win, cmd);
+				render();
+			}
+		});
 	}
 
 	public GameWindows startConsoleThread() {
@@ -134,7 +146,7 @@ public class GameWindows extends JFrame {
 				Scanner in = new Scanner(System.in);
 				while (true) {
 					String line = in.nextLine();
-					execute(line);
+					sendCommand(line);
 				}
 			}
 		}.start();
@@ -143,7 +155,7 @@ public class GameWindows extends JFrame {
 
 	}
 
-	public final void render() {
+	private void render() {
 		if (viewer == null) {
 			return;
 		}
@@ -183,20 +195,6 @@ public class GameWindows extends JFrame {
 
 			}
 		}, delay, unit);
-	}
-
-	private class CmdRunnable implements Runnable {
-		String cmd;
-
-		public CmdRunnable(String cmd) {
-			this.cmd = cmd;
-		}
-
-		@Override
-		public void run() {
-			handler.execute(win, cmd);
-			render();
-		}
 	}
 
 }
