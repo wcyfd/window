@@ -43,11 +43,6 @@ public class GameWindows extends JFrame {
 
 	private GameWindows() {
 		this.win = this;
-		this.initialize();
-	}
-
-	public static GameWindows create() {
-		return new GameWindows();
 	}
 
 	public void setHandler(GameHandler handler) {
@@ -194,6 +189,35 @@ public class GameWindows extends JFrame {
 
 			}
 		}, delay, unit);
+	}
+
+	static public class Builder {
+		private IView view;
+		private GameHandler handler;
+
+		public Builder setView(IView view) {
+			this.view = view;
+			return this;
+		}
+
+		public Builder setHandler(GameHandler handler) {
+			this.handler = handler;
+			return this;
+		}
+
+		public static Builder create() {
+			return new Builder();
+		}
+
+		public GameWindows build() {
+			GameWindows game = new GameWindows();
+			game.setView(view);
+			game.setHandler(handler);
+
+			game.initialize();
+
+			return game;
+		}
 	}
 
 }
