@@ -173,7 +173,7 @@ public class GameWindows extends JFrame {
 	 * @param unit
 	 * @return
 	 */
-	public ScheduledFuture<?> schedule(UIRunnable runnable, long delay, TimeUnit unit) {
+	public ScheduledFuture<?> schedule(Task runnable, long delay, TimeUnit unit) {
 		return scheduledThread.schedule(new Runnable() {
 
 			@Override

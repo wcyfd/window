@@ -1,6 +1,6 @@
 package game.quick.window;
 
-public interface UIRunnable {
+public interface Task {
 
 	void execute();
 
