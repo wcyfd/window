@@ -45,6 +45,10 @@ public class GameWindows extends JFrame {
 		this.win = this;
 	}
 
+	public static GameWindows create() {
+		return new GameWindows();
+	}
+
 	public void setHandler(GameHandler handler) {
 		this.handler = handler;
 	}
@@ -189,6 +193,11 @@ public class GameWindows extends JFrame {
 
 			}
 		}, delay, unit);
+	}
+
+	public GameWindows build() {
+		initialize();
+		return this;
 	}
 
 	static public class Builder {
