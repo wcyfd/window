@@ -36,6 +36,7 @@ public class GameWindows extends JFrame {
 
 	private ExecutorService logicThread = Executors.newSingleThreadExecutor();
 	private ScheduledExecutorService scheduledThread = Executors.newScheduledThreadPool(1);
+	private ExecutorService commandThread = Executors.newSingleThreadExecutor();
 
 	public void setView(IView view) {
 		this.viewer = view;
@@ -69,7 +70,7 @@ public class GameWindows extends JFrame {
 		outputStream = new PipedOutputStream();
 		inputStream = new PipedInputStream();
 
-		outputStream.connect(inputStream);
+		inputStream.connect(outputStream);
 
 		bw = new BufferedWriter(new OutputStreamWriter(outputStream));
 	}
@@ -79,13 +80,17 @@ public class GameWindows extends JFrame {
 	}
 
 	private void sendCommand(String line) {
-		try {
-			bw.write(line);
-			bw.newLine();
-			bw.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		// 这里为什么要起一个线程来传送指令，那是因为管道流只能为一个线程提供输入，两个会报write end dead的错误
+		commandThread.execute(() -> {
+			try {
+				bw.write(line);
+				bw.newLine();
+				bw.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+
 	}
 
 	private void initComponent() {
