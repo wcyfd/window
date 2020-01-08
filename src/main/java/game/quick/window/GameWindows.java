@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Scanner;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -177,12 +178,12 @@ public class GameWindows extends JFrame {
 	/**
 	 * 计时器，时间到了之后会触发事件，但是事件是调用逻辑线程， 逻辑线程将该事件执行完毕之后会进行渲染
 	 * 
-	 * @param runnable
+	 * @param task
 	 * @param delay
 	 * @param unit
 	 * @return
 	 */
-	public ScheduledFuture<?> schedule(Task runnable, long delay, TimeUnit unit) {
+	public ScheduledFuture<?> schedule(Task task, long delay, TimeUnit unit) {
 		return scheduledThread.schedule(new Runnable() {
 
 			@Override
@@ -190,13 +191,14 @@ public class GameWindows extends JFrame {
 				logicThread.execute(new Runnable() {
 					@Override
 					public void run() {
-						runnable.execute();
+						task.execute();
 						render();
-						runnable.afterExecute();
+						task.afterExecute();
 					}
 				});
 
 			}
+
 		}, delay, unit);
 	}
 
