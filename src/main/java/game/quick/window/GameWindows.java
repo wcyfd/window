@@ -1,6 +1,8 @@
 package game.quick.window;
 
 import java.awt.BorderLayout;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -8,8 +10,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -18,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 public class GameWindows extends JFrame {
@@ -33,7 +37,10 @@ public class GameWindows extends JFrame {
 	private GameWindows win = null;
 
 	private JTextArea area = new JTextArea();
+	private JTextField input = new JTextField();
 	private IView viewer = null;
+	private List<String> historyCmd = new ArrayList<>();
+	private int historyIndex = -1;
 
 	private ExecutorService logicThread = Executors.newSingleThreadExecutor();
 	private ScheduledExecutorService scheduledThread = Executors.newScheduledThreadPool(1);
@@ -107,6 +114,19 @@ public class GameWindows extends JFrame {
 		area.setLineWrap(true);
 		area.setEditable(false);
 		add(area, BorderLayout.CENTER);
+
+		input = new JTextField();
+		add(input, BorderLayout.SOUTH);
+
+		input.addActionListener(e -> {
+			String cmd = input.getText();
+			historyIndex = -1;
+			sendCommand(cmd);
+			historyCmd.add(0, cmd);
+			SwingUtilities.invokeLater(() -> input.setText(""));
+		});
+
+		input.addKeyListener(new HistoryKeyListener());
 	}
 
 	private void cmdStart() {
@@ -236,4 +256,30 @@ public class GameWindows extends JFrame {
 		}
 	}
 
+	private class HistoryKeyListener extends KeyAdapter {
+		@Override
+		public void keyPressed(KeyEvent arg0) {
+			int code = arg0.getKeyCode();
+			switch (code) {
+			case KeyEvent.VK_UP: {
+				if (historyIndex + 1 < historyCmd.size()) {
+					historyIndex++;
+					SwingUtilities.invokeLater(() -> input.setText(historyCmd.get(historyIndex)));
+				}
+
+				break;
+			}
+
+			case KeyEvent.VK_DOWN:
+				if (historyIndex - 1 >= 0) {
+					historyIndex--;
+					SwingUtilities.invokeLater(() -> input.setText(historyCmd.get(historyIndex)));
+				} else {
+					historyIndex = -1;
+					SwingUtilities.invokeLater(() -> input.setText(""));
+				}
+				break;
+			}
+		}
+	}
 }
